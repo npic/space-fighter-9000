@@ -1,4 +1,5 @@
 var gameOver,
+    kbdState, KEYS,
     context,
     images,
     sounds,
@@ -26,7 +27,6 @@ function Ship(image, x, y)
     this.shootCounter = 0;
     this.MOVEINTERVAL = FPS/2;
     this.moveCounter = 0;
-    this.DIRECTIONS = { UP: 87, DOWN: 83, LEFT: 65, RIGHT: 68 };
     this.center = function()
                   {
                       var halfW = this.SPRITE_W / 2;
@@ -51,25 +51,25 @@ function Ship(image, x, y)
                     var c = this.center();
                     switch(direction)
                     {
-                        case this.DIRECTIONS.UP:
+                        case 'UP':
                             if (c.y-this.speed > 0)
                             {
                                 this.y -= this.speed;
                             }
                             break;
-                        case this.DIRECTIONS.DOWN:
+                        case 'DOWN':
                             if (c.y+this.speed < CANVAS_H)
                             {
                                 this.y += this.speed;
                             }
                             break;
-                        case this.DIRECTIONS.LEFT:
+                        case 'LEFT':
                             if (c.x-this.speed > 0)
                             {
                                 this.x -= this.speed;
                             }
                             break;
-                        case this.DIRECTIONS.RIGHT:
+                        case 'RIGHT':
                             if (c.x+this.speed < CANVAS_W)
                             {
                                 this.x += this.speed;
@@ -101,19 +101,19 @@ function Ship(image, x, y)
                       {
                           if (this.x < player.x)
                           {
-                              this.move(this.DIRECTIONS.RIGHT);
+                              this.move('RIGHT');
                           }
                           if (this.x > player.x)
                           {
-                              this.move(this.DIRECTIONS.LEFT);
+                              this.move('LEFT');
                           }
                           if (this.y < player.y)
                           {
-                              this.move(this.DIRECTIONS.DOWN);
+                              this.move('DOWN');
                           }
                           if (this.y > player.y)
                           {
-                              this.move(this.DIRECTIONS.UP);
+                              this.move('UP');
                           }
                           this.moveCounter = 0;
                       }
@@ -217,6 +217,7 @@ function update()
             bullets.splice(i, 1);
         }
     }
+    player.update();
     for (var i = enemies.length-1; i >= 0; i--)
     {
         if (enemies[i].alive)
@@ -257,14 +258,14 @@ function draw()
     {
         stars[i].draw();
     }
+    for (var i = 0; i < bullets.length; i++)
+    {
+        bullets[i].draw();
+    }
     player.draw();
     for (var i = 0; i < enemies.length; i++)
     {
         enemies[i].draw();
-    }
-    for (var i = 0; i < bullets.length; i++)
-    {
-        bullets[i].draw();
     }
 }
 
@@ -301,7 +302,44 @@ function keyDownHandler(evt)
     {
         return;
     }
-    player.move(evt.keyCode);
+    switch (evt.keyCode)
+    {
+        case KEYS.UP:
+            kbdState.UP = true;
+            break;
+        case KEYS.DOWN:
+            kbdState.DOWN = true;
+            break;
+        case KEYS.LEFT:
+            kbdState.LEFT = true;
+            break;
+        case KEYS.RIGHT:
+            kbdState.RIGHT = true;
+            break;
+    }
+}
+
+function keyUpHandler(evt)
+{
+    if (gameOver)
+    {
+        return;
+    }
+    switch (evt.keyCode)
+    {
+        case KEYS.UP:
+            kbdState.UP = false;
+            break;
+        case KEYS.DOWN:
+            kbdState.DOWN = false;
+            break;
+        case KEYS.LEFT:
+            kbdState.LEFT = false;
+            break;
+        case KEYS.RIGHT:
+            kbdState.RIGHT = false;
+            break;
+    }
 }
 
 function myAtan(x1, y1, x2, y2)
@@ -328,8 +366,25 @@ function main()
     player = new Ship(images.player, CANVAS_W/2, CANVAS_H);
     player.x -= player.SPRITE_W/2;
     player.y -= player.SPRITE_H;
-    player.update = function(){};
-    player.score = 0;
+    player.update = function()
+                    {
+                        if (kbdState.UP)
+                        {
+                            player.move('UP');
+                        }
+                        if (kbdState.DOWN)
+                        {
+                            player.move('DOWN');
+                        }
+                        if (kbdState.LEFT)
+                        {
+                            player.move('LEFT');
+                        }
+                        if (kbdState.RIGHT)
+                        {
+                            player.move('RIGHT');
+                        }
+                    };
 
     bullets = new Array();
     enemies = new Array();
@@ -342,9 +397,13 @@ function main()
         stars.push(new Star());
     }
 
+    kbdState = { UP: false, DOWN: false, LEFT: false, RIGHT: false };
+    KEYS = { UP: 87, DOWN: 83, LEFT: 65, RIGHT: 68 };
+
     canvas.addEventListener('mousemove', mouseMoveHandler, true);
     canvas.addEventListener('click', mouseClickHandler, true);
     window.addEventListener('keydown', keyDownHandler, true);
+    window.addEventListener('keyup', keyUpHandler, true);
 
     setInterval(function() { update(); draw(); }, 1000/FPS);
 }
